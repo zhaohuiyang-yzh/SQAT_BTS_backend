@@ -1,0 +1,50 @@
+[
+        {
+          type: '股票',
+          productName: "沃森生物",
+          yearlyBenefit: "248.81%",
+          timeLimit: "灵活申赎",
+          singlePrice: 50
+        },
+        {
+          type: '股票',
+          productName: "和林微纳",
+          yearlyBenefit: "179.69%",
+          timeLimit: "灵活申赎",
+          singlePrice: 50
+        },
+        {
+          type: '基金',
+          productName: "广发价值领先混合",
+          yearlyBenefit: "36.75%",
+          timeLimit: "灵活申赎",
+          singlePrice: 100
+        },
+        {
+          type: '基金',
+          productName: "中欧价值智选回报",
+          yearlyBenefit: "30.69%",
+          timeLimit: "灵活申赎",
+          singlePrice: 100
+        },
+        {
+          type: '定期',
+          productName: "安增益31天",
+          yearlyBenefit: "3.07%",
+          timeLimit: "31天",
+          singlePrice: 500
+        },
+        {
+          type: '定期',
+          productName: "天弘闲钱佳",
+          yearlyBenefit: "3.49%",
+          timeLimit: "90天",
+          singlePrice: 1000
+        }, {
+          type: '定期',
+          productName: "建信养老飞年宝",
+          yearlyBenefit: "3.76%",
+          timeLimit: "365天",
+          singlePrice: 2000
+        }
+      ]
