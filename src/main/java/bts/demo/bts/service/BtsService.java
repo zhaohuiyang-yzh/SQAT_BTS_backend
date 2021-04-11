@@ -2,11 +2,16 @@ package bts.demo.bts.service;
 
 import bts.demo.bts.domain.*;
 import bts.demo.bts.repository.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,8 +24,11 @@ public class BtsService {
     private final AccountRepository accountRepository;
     private final LoanRepository loanRepository;
     private final PlanRepository planRepository;
+    private final FinancialProductRepo financialProductRepo;
+    private final ProductHoldRepo productHoldRepo;
     private static final Map<String, String> Transaction_TYPE_Enum = new HashMap<>();
     private static final String BRANCH_NAME = "吕昌泽的机构";
+    private final Logger logger = LoggerFactory.getLogger(BtsService.class);
 
     static {
         Transaction_TYPE_Enum.put("2006", "到期柜面还款");
@@ -32,13 +40,16 @@ public class BtsService {
     @Autowired
     public BtsService(TransactionRepository transactionRepository, DataUserRepository userRepository,
                       CustomerRepository customerRepository, AccountRepository accountRepository,
-                      LoanRepository loanRepository, PlanRepository planRepository) {
+                      LoanRepository loanRepository, PlanRepository planRepository,
+                      FinancialProductRepo financialProductRepo, ProductHoldRepo productHoldRepo) {
         this.transactionRepository = transactionRepository;
         this.userRepository = userRepository;
         this.customerRepository = customerRepository;
         this.accountRepository = accountRepository;
         this.loanRepository = loanRepository;
         this.planRepository = planRepository;
+        this.financialProductRepo = financialProductRepo;
+        this.productHoldRepo = productHoldRepo;
     }
 
     public Map[] getTransactionInfo() {
@@ -189,16 +200,18 @@ public class BtsService {
             return false;
         balance -= money;
         account.setBalance(balance);
+        accountRepository.save(account);
         return true;
     }
 
-    public boolean autoRepay() {
+    public boolean autoRepay(String date) {
         boolean isSuccess = true;
         Iterable<Account> accountList = accountRepository.findAll();
         for (Account account : accountList) {
             List<Loan> loans = loanRepository.findAllByAccountNum(account.getAccountNum());
             for (Loan loan : loans) {
                 List<Plan> planList = planRepository.findAllByIouNum(loan.getIouNum());
+                planList.removeIf(p -> afterDate(p.getDate(), date));
                 for (Plan plan : planList) {
                     switch (plan.getRepaymentStatus()) {
                         //这是有3个入口的一个执行流，break是故意没有的
@@ -220,6 +233,18 @@ public class BtsService {
         return isSuccess;
     }
 
+    private boolean afterDate(String dateStr1, String dateStr2) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        try {
+            Date date1 = sdf.parse(dateStr1);
+            Date date2 = sdf.parse(dateStr2);
+            return date1.after(date2);
+        } catch (ParseException e) {
+            logger.error("An error of parse date happened in method beforeDate of class BtsService");
+        }
+        return false;
+    }
+
     private void loadTransaction(String account, double amount, String branchName, String transactionCode) {
         String type = Transaction_TYPE_Enum.get(transactionCode);
         DateTimeFormatter codeFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
@@ -237,5 +262,96 @@ public class BtsService {
         transaction.setAccount(account);
         transaction.setAmount(amount);
         transactionRepository.save(transaction);
+    }
+
+    public int judgeCreditLevel(String accountNum) {
+        Account account = accountRepository.findByAccountNum(accountNum);
+        List<Loan> loans = loanRepository.findAllByAccountNum(accountNum);
+        double total = 0;
+        for (Loan loan : loans) {
+            total += loan.getTotalAmount();
+        }
+        double minus = account.getBalance() - total;
+        if (minus > Account.LEVEL1_LIMIT)
+            return Account.CREDIT_LEVEL1;
+        if (minus >= 0)
+            return Account.CREDIT_LEVEL2;
+        return Account.CREDIT_LEVEL3;
+    }
+
+    public Map[] getProductList() {
+        List<FinancialProduct> products = financialProductRepo.listAll();
+        return getProductsResponse(products);
+    }
+
+    private Map[] getProductsResponse(List<FinancialProduct> products) {
+        Map[] response = new Map[products.size()];
+        int i = 0;
+        for (FinancialProduct product : products) {
+            Map<String, Object> map = getProductMap(product);
+            response[i] = map;
+            i++;
+        }
+        return response;
+    }
+
+    private Map<String, Object> getProductMap(FinancialProduct product) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("productName", product.getName());
+        map.put("type", product.getType());
+        map.put("yearlyBenefit", product.getYearlyBenefit());
+        map.put("timeLimit", product.getTimeLimit());
+        map.put("singlePrice", product.getSinglePrice());
+        return map;
+    }
+
+    public Map[] getProductList(String accountNum) {
+        List<ProductHold> holdList = productHoldRepo.findAllByAccountNum(accountNum);
+        Map[] response = new Map[holdList.size()];
+        int i = 0;
+        for (ProductHold hold : holdList) {
+            FinancialProduct product = financialProductRepo.findByName(hold.getProductName());
+            Map<String, Object> map = getProductMap(product);
+            map.put("date", hold.getBuyingDate());
+            map.put("buyInNum", hold.getCount());
+            map.put("yesterdayBenefit", (product.getSinglePrice() - hold.getBuyingPrice()) * hold.getCount());
+            response[i] = map;
+            i++;
+        }
+        return response;
+    }
+
+    public boolean hasFine(String accountNum) {
+        boolean isSuccess = true;
+        List<Loan> loans = loanRepository.findAllByAccountNum(accountNum);
+        for (Loan loan : loans) {
+            String iouNum = loan.getIouNum();
+            List<Plan> planList = planRepository.findAllByIouNum(iouNum);
+            for (Plan plan : planList) {
+                if (plan.getRepaymentStatus() == Plan.OVERDUE && !payFine(plan, accountNum))
+                    isSuccess = false;
+            }
+        }
+        return isSuccess;
+    }
+
+    public boolean buyProduct(String accountNum, String name, String date, int num, double price) {
+        double money = num * price;
+        if (pay(accountNum, money)) {
+            buyInProduct(accountNum, name, date, num, price);
+            return true;
+        }
+        return false;
+    }
+
+    private void buyInProduct(String accountNum, String name, String date, int num, double price) {
+        ProductHold hold = new ProductHold();
+        hold.setAccountNum(accountNum);
+        hold.setBuyingDate(date);
+        hold.setBuyingPrice(price);
+        hold.setCount(num);
+        hold.setProductName(name);
+        productHoldRepo.save(hold);
+        loadTransaction(accountNum, price * num, BRANCH_NAME, "8765");
     }
 }

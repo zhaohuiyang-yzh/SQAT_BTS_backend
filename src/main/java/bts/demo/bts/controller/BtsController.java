@@ -91,9 +91,55 @@ public class BtsController {
     }
 
     @PostMapping("/autoPayBack")
-    public ResponseEntity<?> autoPay() {
-        if (btsService.autoRepay())
+    public ResponseEntity<?> autoPay(@RequestBody Map<String, String> request) {
+        String date = request.get("date");
+        if (btsService.autoRepay(date))
             return new ResponseEntity<>(HttpStatus.OK);
         return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    }
+
+    @PostMapping("/getCreditLevel")
+    public ResponseEntity<Map<String, Integer>> getCreditLevel(@RequestBody Map<String, String> request) {
+        String accountNum = request.get("accountNum");
+        Map<String, Integer> response = new HashMap<>();
+        response.put("creditLevel", btsService.judgeCreditLevel(accountNum));
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/getProductList")
+    public ResponseEntity<Map<String, Object>> getProductsList() {
+        Map[] productList = btsService.getProductList();
+        Map<String, Object> response = new HashMap<>();
+        response.put("productList", productList);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/judgeFine")
+    public ResponseEntity<?> judgeFine(@RequestBody Map<String, String> request) {
+        String accountNum = request.get("accountNum");
+        if (btsService.hasFine(accountNum))
+            return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    }
+
+    @PostMapping("/buyProduct")
+    public ResponseEntity<?> buyProduct(@RequestBody Map<String, Object> request) {
+        String accountNum = request.get("accountNum").toString();
+        String name = request.get("productName").toString();
+        String date = request.get("date").toString();
+        int num = Integer.parseInt(request.get("buyInNum").toString());
+        double price = Double.parseDouble(request.get("singlePrice").toString());
+        if (btsService.buyProduct(accountNum, name, date, num, price))
+            return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    }
+
+    @PostMapping("/getAccountFinancialProduct")
+    public ResponseEntity<Map<String, Object>> getAccountProductsList(@RequestBody Map<String, String> request) {
+        String accountNum = request.get("accountNum");
+        Map[] productList = btsService.getProductList(accountNum);
+        Map<String, Object> response = new HashMap<>();
+        response.put("productList", productList);
+        return ResponseEntity.ok(response);
     }
 }

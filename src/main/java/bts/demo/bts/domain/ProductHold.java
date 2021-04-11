@@ -14,7 +14,7 @@ public class ProductHold {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
     private String accountNum;
-    private int productName;
+    private String productName;
     private String buyingDate;
     private int count;
     private double buyingPrice;

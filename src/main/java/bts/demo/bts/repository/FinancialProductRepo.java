@@ -9,4 +9,6 @@ import java.util.List;
 public interface FinancialProductRepo extends CrudRepository<FinancialProduct, String> {
     @Query("from FinancialProduct ")
     public List<FinancialProduct> listAll();
+
+    public FinancialProduct findByName(String name);
 }
