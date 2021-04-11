@@ -194,20 +194,26 @@ public class BtsService {
 
     public boolean autoRepay() {
         boolean isSuccess = true;
-        List<Plan> planList = planRepository.listAll();
-        for (Plan plan : planList) {
-            Loan loan = loanRepository.findByIouNum(plan.getIouNum());
-            switch (plan.getRepaymentStatus()) {
-                //这是有3个入口的一个执行流，break是故意没有的
-                case Plan.OVERDUE:
-                    if (!payFine(plan, loan.getAccountNum()))
-                        isSuccess = false;
-                case Plan.UN_REPAY:
-                    if (!repay(loan.getAccountNum(), plan.getRemainAmount(), plan))
-                        isSuccess = false;
-                case Plan.HAVE_PAYED:
-                    break;
+        Iterable<Account> accountList = accountRepository.findAll();
+        for (Account account : accountList) {
+            List<Loan> loans = loanRepository.findAllByAccountNum(account.getAccountNum());
+            for (Loan loan : loans) {
+                List<Plan> planList = planRepository.findAllByIouNum(loan.getIouNum());
+                for (Plan plan : planList) {
+                    switch (plan.getRepaymentStatus()) {
+                        //这是有3个入口的一个执行流，break是故意没有的
+                        case Plan.OVERDUE:
+                            if (!payFine(plan, loan.getAccountNum()))
+                                isSuccess = false;
+                        case Plan.UN_REPAY:
+                            if (!repay(loan.getAccountNum(), plan.getRemainAmount(), plan))
+                                isSuccess = false;
+                        case Plan.HAVE_PAYED:
+                            break;
+                    }
+                }
             }
+
         }
         if (isSuccess)
             loadTransaction("", 0, BRANCH_NAME, "2005");
