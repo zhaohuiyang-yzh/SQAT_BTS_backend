@@ -64,6 +64,8 @@ public class BtsApplication implements CommandLineRunner {
         JSONArray financialProducts = DataInFileUtil.readFile(FILE_DIR + financialProduct);
         mysqlService.readFinalProduct(financialProducts);
         log.info("Financial product records have been saved");
+        mysqlService.computeFine();
+        log.info("Fine computing has completed");
     }
 
     private void readAccounts(String token) throws Exception {

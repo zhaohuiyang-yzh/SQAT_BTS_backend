@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Component
@@ -195,6 +196,19 @@ public class MysqlService {
             user.setUsername(userJson.getString("username"));
             user.setPassword(userJson.getString("password"));
             userRepository.save(user);
+        }
+    }
+
+    public void computeFine() throws Exception {
+        Iterable<Plan> planIterable = planRepository.findAll();
+        LocalDate today = LocalDate.now();
+        for (Plan plan : planIterable) {
+            LocalDate planDate = LocalDate.parse(plan.getDate());
+            if (today.isAfter(planDate)) {
+                plan.setPenaltyInterest(plan.getPrincipal() * Plan.PENALTY_RATE);
+                plan.setRepaymentStatus(Plan.OVERDUE);
+                planRepository.save(plan);
+            }
         }
     }
 }
