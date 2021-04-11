@@ -67,8 +67,8 @@ public class BtsService {
         return password.equals(user.getPassword());
     }
 
-    public Boolean verifyCustomer(String idNum) {
-        return customerRepository.findByIdNum(idNum) != null;
+    public Customer verifyCustomer(String idNum) {
+        return customerRepository.findByIdNum(idNum);
     }
 
     public Map[] getAccounts(String customerCode) {

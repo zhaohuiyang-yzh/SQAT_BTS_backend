@@ -1,5 +1,6 @@
 package bts.demo.bts.controller;
 
+import bts.demo.bts.domain.Customer;
 import bts.demo.bts.service.BtsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -35,10 +36,10 @@ public class BtsController {
     @PostMapping("/verifyCustomer")
     public ResponseEntity<?> verifyCustomer(@RequestBody Map<String, String> request) {
         String idNumber = request.get("idnumber");
-        if (btsService.verifyCustomer(idNumber))
-            return new ResponseEntity<>(HttpStatus.OK);
-        else
+        Customer customer = btsService.verifyCustomer(idNumber);
+        if (customer == null)
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        return ResponseEntity.ok(customer);
     }
 
     @PostMapping("/getAccounts")
