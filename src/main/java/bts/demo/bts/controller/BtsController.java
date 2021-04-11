@@ -56,7 +56,7 @@ public class BtsController {
         String accountNum = request.get("accountNum");
         Map[] loanList = btsService.getLoans(accountNum);
         Map<String, Object> response = new HashMap<>();
-        response.put("accountList", loanList);
+        response.put("loanList", loanList);
         return ResponseEntity.ok(response);
     }
 
