@@ -121,7 +121,7 @@ public class BtsService {
             map.put("remainInterest", plan.getRemainInterest());
             map.put("remainAmount", plan.getRemainAmount());
             map.put("fine", plan.getPenaltyInterest());
-            map.put("repaymentStatue", plan.getRepaymentStatus());
+            map.put("repaymentStatus", plan.getRepaymentStatus());
             map.put("planDate", plan.getDate());
             response[i] = map;
             i++;
