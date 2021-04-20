@@ -26,4 +26,5 @@ public class Customer {
     private int sex;
     private String updateTime;
     private int updater;
+
 }

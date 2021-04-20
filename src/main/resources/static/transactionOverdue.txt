@@ -1,0 +1,9 @@
+[{
+transactionNum:"lcz012002215202103071520101",
+account:"716177764812531",
+amount:10000,
+branchName:"吕昌泽的机构",
+operatorTime:"2021-03-07 15:20:10",
+transactionCode:2002,
+transactionType:"贷款发放"
+}]

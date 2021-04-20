@@ -1,0 +1,18 @@
+[
+{
+iouNum:"L2103071504571",
+accountNum:"6161754432644526488",
+balance:10000,
+createTime:"2021-03-07 15:04:58",
+creator:215,
+customerCode:"lcz01202104075",
+customerName:"吕昌泽的客户二",
+loanStatus:2,
+overdueBalance:0,
+productCode:20001,
+productName:"买房贷款",
+repaymentMethod:2,
+totalAmount:10000,
+totalInterest:600
+}
+]

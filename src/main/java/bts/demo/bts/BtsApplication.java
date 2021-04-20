@@ -27,6 +27,12 @@ public class BtsApplication implements CommandLineRunner {
     private String financialProduct;
     @Value("${users}")
     private String usersFile;
+    @Value("${planOverdue}")
+    private String planFile;
+    @Value("${loanOverdue}")
+    private String loanFile;
+    @Value("${transactionOverdue}")
+    private String transactionFile;
     @Autowired
     private HTTPDataUtil httpDataUtil;
     @Autowired
@@ -64,8 +70,10 @@ public class BtsApplication implements CommandLineRunner {
         JSONArray financialProducts = DataInFileUtil.readFile(FILE_DIR + financialProduct);
         mysqlService.readFinalProduct(financialProducts);
         log.info("Financial product records have been saved");
+        readFile();
         mysqlService.computeFine();
         log.info("Fine computing has completed");
+        log.info("BTS has been started");
     }
 
     private void readAccounts(String token) throws Exception {
@@ -84,6 +92,18 @@ public class BtsApplication implements CommandLineRunner {
             JSONObject plans = httpDataUtil.sendGet("/loan/plan", "iouNum=" + iouNum, token);
             mysqlService.readPlan(plans);
         }
+    }
+
+    private void readFile() throws Exception {
+        JSONObject jsonObject = new JSONObject();
+        JSONArray plans = DataInFileUtil.readFile(FILE_DIR + planFile);
+        jsonObject.put("data", plans);
+        mysqlService.readPlan(jsonObject);
+        JSONArray loans = DataInFileUtil.readFile(FILE_DIR + loanFile);
+        mysqlService.readLoan(loans);
+        JSONArray transactions = DataInFileUtil.readFile(FILE_DIR + transactionFile);
+        jsonObject.put("list", transactions);
+        mysqlService.readTransaction(jsonObject);
     }
 }
 

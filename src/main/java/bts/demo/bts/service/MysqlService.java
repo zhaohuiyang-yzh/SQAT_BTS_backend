@@ -6,8 +6,6 @@ import bts.demo.bts.utils.HTTPDataUtil;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -24,8 +22,6 @@ public class MysqlService {
     private final FinancialProductRepo financialProductRepo;
     private final HTTPDataUtil httpDataUtil;
     private final DataUserRepository userRepository;
-
-    private final Logger log = LoggerFactory.getLogger(MysqlService.class);
 
     @Autowired
     public MysqlService(TransactionRepository transactionRepository, CustomerRepository customerRepository,
@@ -123,14 +119,18 @@ public class MysqlService {
     }
 
     public void readLoan(JSONObject loans, String token) throws Exception {
+        List<Customer> customerList = customerRepository.listAll();
         JSONArray loanList = new JSONArray(loans.getString("list"));
         for (int i = 0; i < loanList.length(); i++) {
             JSONObject loanJson = loanList.getJSONObject(i);
+            String code = loanJson.getString("customerCode");
+            if (!isInCustomer(code, customerList))
+                continue;
             Loan loan = new Loan();
             loan.setBalance(loanJson.getDouble("balance"));
             loan.setCreateTime(loanJson.getString("createTime"));
             loan.setCreator(loanJson.getInt("creator"));
-            loan.setCustomerCode(loanJson.getString("customerCode"));
+            loan.setCustomerCode(code);
             loan.setCustomerName(loanJson.getString("customerName"));
             String iouNum = loanJson.getString("iouNum");
             loan.setIouNum(iouNum);
@@ -146,6 +146,37 @@ public class MysqlService {
             loan.setTotalInterest(loanJson.getDouble("totalInterest"));
             loanRepository.save(loan);
         }
+    }
+
+    public void readLoan(JSONArray loans) throws JSONException {
+        for (int i = 0; i < loans.length(); i++) {
+            JSONObject loanJson = loans.getJSONObject(i);
+            String code = loanJson.getString("customerCode");
+            Loan loan = new Loan();
+            loan.setBalance(loanJson.getDouble("balance"));
+            loan.setCreateTime(loanJson.getString("createTime"));
+            loan.setCreator(loanJson.getInt("creator"));
+            loan.setCustomerCode(code);
+            loan.setCustomerName(loanJson.getString("customerName"));
+            loan.setIouNum(loanJson.getString("iouNum"));
+            loan.setAccountNum(loanJson.getString("accountNum"));
+            loan.setLoanStatus(loanJson.getInt("loanStatus"));
+            loan.setOverdueBalance(loanJson.getDouble("overdueBalance"));
+            loan.setProductCode(loanJson.getString("productCode"));
+            loan.setProductName(loanJson.getString("productName"));
+            loan.setRepaymentMethod(loanJson.getInt("repaymentMethod"));
+            loan.setTotalAmount(loanJson.getDouble("totalAmount"));
+            loan.setTotalInterest(loanJson.getDouble("totalInterest"));
+            loanRepository.save(loan);
+        }
+    }
+
+    private boolean isInCustomer(String code, List<Customer> customers) {
+        for (Customer customer : customers) {
+            if (customer.getCode().equals(code))
+                return true;
+        }
+        return false;
     }
 
     public List<Loan> getLoans() {
@@ -199,7 +230,7 @@ public class MysqlService {
         }
     }
 
-    public void computeFine() throws Exception {
+    public void computeFine() {
         Iterable<Plan> planIterable = planRepository.findAll();
         LocalDate today = LocalDate.now();
         for (Plan plan : planIterable) {

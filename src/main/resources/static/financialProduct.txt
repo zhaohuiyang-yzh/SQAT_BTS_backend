@@ -40,11 +40,12 @@
           yearlyBenefit: "3.49%",
           timeLimit: "90天",
           singlePrice: 1000
-        }, {
+        },
+        {
           type: '定期',
           productName: "建信养老飞年宝",
           yearlyBenefit: "3.76%",
           timeLimit: "365天",
           singlePrice: 2000
         }
-      ]
+]

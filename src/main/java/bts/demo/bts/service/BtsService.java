@@ -84,6 +84,8 @@ public class BtsService {
 
     public Map[] getAccounts(String customerCode) {
         Customer customer = customerRepository.findByCode(customerCode);
+        if (customer == null)
+            return null;
         List<Account> accountList = accountRepository.findAllByCustomerId(customer.getId());
         Map[] response = new Map[accountList.size()];
         int i = 0;
@@ -103,6 +105,8 @@ public class BtsService {
 
     public Map[] getLoans(String accountNumber) {
         List<Loan> loanList = loanRepository.findAllByAccountNum(accountNumber);
+        if (loanList.size() == 0)
+            return null;
         Map[] response = new Map[loanList.size()];
         int i = 0;
         for (Loan loan : loanList) {
@@ -124,6 +128,8 @@ public class BtsService {
     public Map[] getBills(String iouNum) {
         List<Plan> billList = planRepository.findAllByIouNum(iouNum);
         Map[] response = new Map[billList.size()];
+        if (response.length == 0)
+            return null;
         int i = 0;
         for (Plan plan : billList) {
             Map<String, Object> map = new HashMap<>();
@@ -233,7 +239,7 @@ public class BtsService {
         return isSuccess;
     }
 
-    private boolean afterDate(String dateStr1, String dateStr2) {
+    public boolean afterDate(String dateStr1, String dateStr2) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         try {
             Date date1 = sdf.parse(dateStr1);

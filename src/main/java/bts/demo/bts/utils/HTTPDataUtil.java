@@ -1,19 +1,20 @@
 package bts.demo.bts.utils;
 
-import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+
 @Component
 public class HTTPDataUtil {
     @Value("${bts.ip}")
-    private  String URL_String;
+    private String urlStr;
     @Value("${bts.username}")
-    private  String username;
+    private String username;
     @Value("${bts.password}")
     private  String password;
 
@@ -22,16 +23,16 @@ public class HTTPDataUtil {
         JSONObject jsonObject = sendPost("/sys/login/restful",  param,"");
         return jsonObject.get("token").toString();
     }
-    public  JSONObject sendGet(String address,String param,String token) throws Exception{
-        String url_appender = param.equals("")? address : address+"?"+param;
-        URL url = new URL(URL_String + url_appender);
+    public  JSONObject sendGet(String address,String param,String token) throws Exception {
+        String urlAppender = param.equals("") ? address : address + "?" + param;
+        URL url = new URL(urlStr + urlAppender);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        configRequestHeader(connection,"GET",token);
+        configRequestHeader(connection, "GET", token);
         connection.connect();
         return new JSONObject(getResponse(connection));
     }
     public  JSONObject sendPost(String address,String param,String token) throws Exception{
-        URL url = new URL(URL_String + address);
+        URL url = new URL(urlStr + address);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         configRequestHeader(connection,"POST",token);
 
